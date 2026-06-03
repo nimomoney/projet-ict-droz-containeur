@@ -1,0 +1,43 @@
+services:
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8081:80"
+    volumes:
+      - ./www:/var/www/html:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+    networks:
+      - nginx-php
+
+  php:
+    build:
+      context: ./php
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.3}
+    volumes:
+      - ./www:/var/www/html
+    networks:
+      - nginx-php
+      - php-mariadb
+
+  mariadb:
+    image: mariadb:${MARIADB_VERSION:-11.3}
+    environment:
+      MARIADB_ROOT_PASSWORD: ""
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+      MARIADB_DATABASE: "app"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - php-mariadb
+
+volumes:
+  mariadb_data:
+
+networks:
+  nginx-php:
+  php-mariadb:
+    internal: true
